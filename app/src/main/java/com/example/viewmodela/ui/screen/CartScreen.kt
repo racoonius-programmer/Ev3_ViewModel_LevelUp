@@ -4,6 +4,9 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -29,7 +32,7 @@ fun CartScreen(cart: List<Producto>, onBack: () -> Unit) {
         if (cart.isEmpty()) {
             Text("El carrito está vacío")
         } else {
-            LazyColumn {
+            LazyColumn(modifier = Modifier.weight(1f)) {
                 items(cart) { product ->
                     Card(
                         Modifier
@@ -62,6 +65,16 @@ fun CartScreen(cart: List<Producto>, onBack: () -> Unit) {
                                 Text(product.name)
                                 Text("Precio: $${product.price.formatPrice()}")
                             }
+                            // --- Botones de Cantidad ---
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                IconButton(onClick = { /* TODO: Lógica para quitar */ }) {
+                                    Icon(Icons.Default.Remove, contentDescription = "Quitar")
+                                }
+                                Text("1") // Cantidad (actualmente estática)
+                                IconButton(onClick = { /* TODO: Lógica para agregar */ }) {
+                                    Icon(Icons.Default.Add, contentDescription = "Agregar")
+                                }
+                            }
                         }
                     }
                 }
@@ -69,6 +82,8 @@ fun CartScreen(cart: List<Producto>, onBack: () -> Unit) {
         }
 
         Spacer(Modifier.height(20.dp))
-        Button(onClick = onBack) { Text("Volver a productos") }
+        Button(onClick = onBack) { Text("Volver a productos")
+        }
+        Spacer(Modifier.height(35.dp))
     }
 }
