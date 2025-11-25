@@ -42,6 +42,8 @@ android {
 
 
 
+
+
 dependencies {
     // --- LIBRERÍAS NUEVAS Y ESENCIALES PARA EL DISEÑO ---
     // Foundation: Proporciona los bloques de construcción básicos de UI como LazyColumn, Row, Box, y el nuevo Pager.
@@ -81,5 +83,12 @@ dependencies {
     // Debug
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+
+    // Retrofit for network operations
+    implementation("com.squareup.retrofit2:retrofit:2.9.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+
+    // Coil for image loading
+    implementation("io.coil-kt:coil-compose:2.5.0")
 }
 

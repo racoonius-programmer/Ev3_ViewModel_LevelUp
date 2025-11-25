@@ -279,6 +279,10 @@ fun BestSellersSection(products: List<Producto>, navController: NavController) {
                 Text("Ver todos")
                 Icon(Icons.Default.ArrowForward, contentDescription = null, modifier = Modifier.size(16.dp))
             }
+            TextButton(onClick = { navController.navigate("api_products") }) {
+                Text("Ver productos de la API")
+                Icon(Icons.Default.ArrowForward, contentDescription = null, modifier = Modifier.size(16.dp))
+            }
         }
         LazyRow(
             contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp),

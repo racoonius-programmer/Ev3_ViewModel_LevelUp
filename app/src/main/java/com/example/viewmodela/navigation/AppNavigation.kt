@@ -12,6 +12,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.viewmodela.R
 import com.example.viewmodela.model.Producto
+import com.example.viewmodela.ui.ProductScreen
 import com.example.viewmodela.ui.screen.RegistroScreen
 import com.example.viewmodela.ui.screen.InicioScreen
 import com.example.viewmodela.viewmodel.UsuarioViewModel
@@ -72,6 +73,9 @@ fun AppNavigation(){
                 Producto("PlayStation 5", 549990, imageRes = R.drawable.playstation5)
             )
             CartScreen(cart = demoCart, onBack = { navController.popBackStack() })
+        }
+        composable("api_products") {
+            ProductScreen()
         }
     }
 }

@@ -18,12 +18,11 @@ class MainActivity : ComponentActivity() {
         setContent {
             ViewModelATheme {
                 Scaffold { innerPadding ->
-                    //Aqui va el flujo de navegación
-                    Box(modifier = Modifier.padding(innerPadding))
-                    AppNavigation()
+                    Box(modifier = Modifier.padding(innerPadding)) {
+                        AppNavigation()
+                    }
                 }
             }
         }
     }
 }
-
