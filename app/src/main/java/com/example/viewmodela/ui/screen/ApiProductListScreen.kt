@@ -1,4 +1,4 @@
-package com.example.viewmodela.ui
+package com.example.viewmodela.ui.screen
 
 import android.widget.Toast
 import androidx.compose.foundation.background
@@ -8,8 +8,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.BrokenImage
-import androidx.compose.material.icons.filled.CloudDownload
-import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.*
@@ -25,16 +23,16 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.viewmodela.api.Product
+import com.example.viewmodela.ui.ProductViewModel
 import com.example.viewmodela.util.NetworkUtils
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ProductScreen(
+fun ApiProductListScreen(
     vm: ProductViewModel,
     navController: NavController
 ) {
@@ -51,13 +49,13 @@ fun ProductScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Listado de Productos") },
+                title = { Text("Resultados API") },
                 actions = {
-                    // Botón Refrescar desde API
+                    // Botón Refrescar API
                     IconButton(onClick = { 
                         if (NetworkUtils.isInternetAvailable(context)) {
                             vm.loadFromApi()
-                            Toast.makeText(context, "Cargando desde API...", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, "Recargando...", Toast.LENGTH_SHORT).show()
                         } else {
                             Toast.makeText(context, "Sin conexión a Internet", Toast.LENGTH_SHORT).show()
                         }
@@ -65,21 +63,14 @@ fun ProductScreen(
                         Icon(Icons.Default.Refresh, contentDescription = "Recargar API")
                     }
 
-                    // Botón Eliminar Todo (para probar BD vacía)
-                    IconButton(onClick = { 
-                        vm.deleteAllData() 
-                    }) {
-                        Icon(Icons.Default.Delete, contentDescription = "Eliminar Todo", tint = MaterialTheme.colorScheme.error)
-                    }
-
-                    // Botón Guardar Local
+                    // Botón Guardar Local (Solo tiene sentido aquí)
                     Button(
                         onClick = { vm.saveToDb() },
                         colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primaryContainer, contentColor = MaterialTheme.colorScheme.onPrimaryContainer)
                     ) {
                         Icon(Icons.Default.Save, contentDescription = null)
                         Spacer(Modifier.width(8.dp))
-                        Text("Guardar")
+                        Text("Guardar Local")
                     }
                 }
             )
@@ -99,7 +90,7 @@ fun ProductScreen(
                     ErrorState(uiState.error!!, onRetry = { vm.loadFromApi() })
                 }
                 uiState.products.isEmpty() -> {
-                    Text("No se encontraron productos.", style = MaterialTheme.typography.bodyLarge)
+                    Text("No hay datos de la API.", style = MaterialTheme.typography.bodyLarge)
                 }
                 else -> {
                     LazyColumn(contentPadding = PaddingValues(16.dp)) {
@@ -116,13 +107,15 @@ fun ProductScreen(
     }
 }
 
+// --- Componentes Compartidos (Copiados aquí para evitar errores de referencia cruzada rápida) ---
+
 @Composable
 fun ProductItem(product: Product, onClick: () -> Unit) {
     // Lógica para el SKU: Si codigo es nulo, usar ID
     val skuDisplay = if (!product.codigo.isNullOrBlank()) {
         "SKU: ${product.codigo}"
     } else {
-        "ID: ${product.id}" // Usamos el ID autogenerado o temporal
+        "ID: ${product.id}"
     }
 
     Card(
@@ -133,7 +126,6 @@ fun ProductItem(product: Product, onClick: () -> Unit) {
         elevation = CardDefaults.cardElevation(4.dp)
     ) {
         Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-            // Imagen con manejo de errores corregido
             AsyncImage(
                 model = ImageRequest.Builder(LocalContext.current)
                     .data(product.imagenUrl)
@@ -142,9 +134,9 @@ fun ProductItem(product: Product, onClick: () -> Unit) {
                 contentDescription = product.nombre ?: "Producto",
                 modifier = Modifier
                     .size(80.dp)
-                    .background(Color.LightGray), // Fondo gris mientras carga o si falla
+                    .background(Color.LightGray),
                 contentScale = ContentScale.Crop,
-                error = rememberVectorPainter(Icons.Default.BrokenImage) // Icono válido en caso de error
+                error = rememberVectorPainter(Icons.Default.BrokenImage)
             )
             
             Spacer(modifier = Modifier.width(16.dp))

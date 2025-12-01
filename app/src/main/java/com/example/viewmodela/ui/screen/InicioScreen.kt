@@ -3,8 +3,9 @@ package com.example.viewmodela.ui.screen
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
-import androidx.compose.foundation.Image
+import android.widget.Toast
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -17,14 +18,11 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowForward
-import androidx.compose.material.icons.filled.Build
-import androidx.compose.material.icons.filled.HelpOutline
-import androidx.compose.material.icons.filled.Image
+import androidx.compose.material.icons.filled.CloudDownload
 import androidx.compose.material.icons.filled.ShoppingCart
+import androidx.compose.material.icons.filled.Storage
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -41,11 +39,13 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.viewmodela.R
 import com.example.viewmodela.model.Producto
+import com.example.viewmodela.ui.ProductViewModel
+import com.example.viewmodela.util.NetworkUtils
 import com.example.viewmodela.util.formatPrice
 import com.example.viewmodela.viewmodel.UsuarioViewModel
+import kotlinx.coroutines.launch
 
 // --- Modelos de datos ---
-// Modificamos el modelo para que acepte un recurso de imagen o un ícono
 data class CarouselSlide(
     val title: String,
     val subtitle: String,
@@ -53,7 +53,7 @@ data class CarouselSlide(
     val icon: ImageVector? = null
 )
 
-// --- Datos de Ejemplo con Íconos e Imagen ---
+// --- Datos de Ejemplo ---
 val carouselSlides = listOf(
     CarouselSlide(
         title = "Level-up Gamer",
@@ -81,9 +81,18 @@ val bestSellers = listOf(
 
 // --- Pantalla Principal ---
 @Composable
-fun InicioScreen(navController: NavController, usuarioViewModel: UsuarioViewModel) {
+fun InicioScreen(
+    navController: NavController, 
+    usuarioViewModel: UsuarioViewModel,
+    productViewModel: ProductViewModel
+) {
     var isLoggedIn by remember { mutableStateOf(false) }
     val username = "Frank"
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope() // Scope para lanzar corrutinas en eventos onClick
+
+    // Observar estado del producto (opcional ahora que manejamos navegación explícita en onDbClick)
+    val productState by productViewModel.uiState.collectAsState()
 
     LazyColumn(
         modifier = Modifier
@@ -91,6 +100,33 @@ fun InicioScreen(navController: NavController, usuarioViewModel: UsuarioViewMode
             .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)),
         contentPadding = PaddingValues(bottom = 16.dp)
     ) {
+        item {
+            // Nueva sección para cumplir con el Requerimiento 3.A
+            OfflineModeSection(
+                onApiClick = {
+                    if (NetworkUtils.isInternetAvailable(context)) {
+                        productViewModel.loadFromApi()
+                        // NAVEGAMOS A LA PANTALLA DE API
+                        navController.navigate("api_products")
+                    } else {
+                        Toast.makeText(context, "Sin conexión a Internet", Toast.LENGTH_SHORT).show()
+                    }
+                },
+                onDbClick = {
+                    scope.launch {
+                        val hasData = productViewModel.hasLocalData()
+                        if (hasData) {
+                            productViewModel.loadFromDb()
+                            // NAVEGAMOS A LA PANTALLA LOCAL
+                            navController.navigate("local_products")
+                        } else {
+                            Toast.makeText(context, "No hay datos locales almacenados", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                }
+            )
+        }
+
         item {
             HeaderSection(
                 isLoggedIn = isLoggedIn,
@@ -103,6 +139,52 @@ fun InicioScreen(navController: NavController, usuarioViewModel: UsuarioViewMode
         item { CarouselSection(slides = carouselSlides) }
         item { BestSellersSection(products = bestSellers, navController = navController) }
         item { TechSupportBanner(context = LocalContext.current) }
+    }
+}
+
+@Composable
+fun OfflineModeSection(
+    onApiClick: () -> Unit,
+    onDbClick: () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp),
+        elevation = CardDefaults.cardElevation(4.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                "Gestión de Productos",
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onPrimaryContainer
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            Button(
+                onClick = onApiClick,
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+            ) {
+                Icon(Icons.Default.CloudDownload, contentDescription = null)
+                Spacer(Modifier.width(8.dp))
+                Text("Cargar desde Rest API")
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+            Button(
+                onClick = onDbClick,
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
+            ) {
+                Icon(Icons.Default.Storage, contentDescription = null)
+                Spacer(Modifier.width(8.dp))
+                Text("Cargar desde Base de Datos Local")
+            }
+        }
     }
 }
 
@@ -120,7 +202,7 @@ fun HeaderSection(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(start = 20.dp, end = 20.dp, top = 24.dp, bottom = 16.dp),
+            .padding(start = 20.dp, end = 20.dp, top = 8.dp, bottom = 16.dp), // Ajusté top padding
         verticalAlignment = Alignment.CenterVertically
     ) {
         Column(modifier = Modifier.weight(1f)) {
@@ -277,10 +359,6 @@ fun BestSellersSection(products: List<Producto>, navController: NavController) {
             )
             TextButton(onClick = { navController.navigate("productos")  }) {
                 Text("Ver todos")
-                Icon(Icons.Default.ArrowForward, contentDescription = null, modifier = Modifier.size(16.dp))
-            }
-            TextButton(onClick = { navController.navigate("api_products") }) {
-                Text("Ver productos de la API")
                 Icon(Icons.Default.ArrowForward, contentDescription = null, modifier = Modifier.size(16.dp))
             }
         }
